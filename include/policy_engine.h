@@ -24,10 +24,10 @@
 #include <stdint.h>
 
 #ifdef TICK_IS_64_BIT
-#define TICK_TYPE uint64_t
+#define TICK_TYPE      uint64_t
 #define TICK_MAX_DELAY 0xFFFFFFFFFFFFFFFF
 #else
-#define TICK_TYPE uint32_t
+#define TICK_TYPE      uint32_t
 #define TICK_MAX_DELAY 0xFFFFFFFF
 #endif
 
@@ -126,17 +126,17 @@ private:
   const EvaluateCapabilityFunc    pdbs_dpm_evaluate_capability;
   const EPREvaluateCapabilityFunc pdbs_dpm_epr_evaluate_capability;
   const DelayFunc                 osDelay;
-  int                             current_voltage_mv;   // The current voltage PD is expecting
-  int                             _requested_voltage;   // The voltage the unit wanted to requests
-  bool                            _unconstrained_power; // If the source is unconstrained
+  volatile int                    current_voltage_mv;   // The current voltage PD is expecting
+  volatile int                    _requested_voltage;   // The voltage the unit wanted to requests
+  volatile bool                   _unconstrained_power; // If the source is unconstrained
   uint8_t                         _tx_messageidcounter; // Counter for messages sent to be packed into messages sent
   uint16_t                        hdr_template;         /* PD message header template */
 
   /* Whether or not we have an explicit contract */
-  bool _explicit_contract;
-  bool negotiationOfEPRInProgress;
+  volatile bool _explicit_contract;
+  volatile bool negotiationOfEPRInProgress;
   /* The number of hard resets we've sent */
-  int8_t _hard_reset_counter;
+  volatile int8_t _hard_reset_counter;
   /* The index of the first PPS APDO */
   uint8_t _pps_index;
 
@@ -192,16 +192,16 @@ private:
     ALL            = (EVENT_MASK(14) - 1),
   };
   // Send a notification
-  void                notify(Notifications notification);
-  policy_engine_state postNotificationEvalState;
-  policy_engine_state postSendState;
-  policy_engine_state postSendFailedState;
-  uint32_t            waitingEventsMask            = 0;
-  TICK_TYPE            waitingEventsTimeout         = 0;
-  uint32_t            currentEvents                = 0;
-  TICK_TYPE            timestampNegotiationsStarted = 0;
-  void                clearEvents(uint32_t notification);
-  policy_engine_state waitForEvent(policy_engine_state evalState, uint32_t notification, TICK_TYPE timeout = TICK_MAX_DELAY);
+  void                         notify(Notifications notification);
+  volatile policy_engine_state postNotificationEvalState;
+  volatile policy_engine_state postSendState;
+  volatile policy_engine_state postSendFailedState;
+  volatile uint32_t            waitingEventsMask            = 0;
+  volatile TICK_TYPE           waitingEventsTimeout         = 0;
+  volatile uint32_t            currentEvents                = 0;
+  volatile TICK_TYPE           timestampNegotiationsStarted = 0;
+  void                         clearEvents(uint32_t notification);
+  policy_engine_state          waitForEvent(policy_engine_state evalState, uint32_t notification, TICK_TYPE timeout = TICK_MAX_DELAY);
 
   policy_engine_state pe_sink_startup();
   policy_engine_state pe_sink_discovery();
@@ -238,18 +238,18 @@ private:
 
   // Event group
   // Temp messages for storage
-  pd_msg                tempMessage;
-  ringbuffer<pd_msg, 8> incomingMessages;
-  pd_msg                irqMessage; // irq will unpack recieved message to here
-  pd_msg                _last_dpm_request;
-  policy_engine_state   state = policy_engine_state::PESinkStartup;
+  pd_msg                       tempMessage;
+  ringbuffer<pd_msg, 4>        incomingMessages;
+  pd_msg                       irqMessage; // irq will unpack recieved message to here
+  pd_msg                       _last_dpm_request;
+  volatile policy_engine_state state = policy_engine_state::PESinkStartup;
   // Read a pending message into the temp message
-  bool       PPSTimerEnabled;
-  TICK_TYPE   PPSTimeLastEvent, EPRTimeLastEvent;
-  epr_pd_msg recent_epr_capabilities;
-  uint8_t    device_epr_wattage;
-  bool       sourceIsEPRCapable;
-  bool       is_epr;
+  volatile bool      PPSTimerEnabled;
+  volatile TICK_TYPE PPSTimeLastEvent, EPRTimeLastEvent;
+  epr_pd_msg         recent_epr_capabilities;
+  uint8_t            device_epr_wattage;
+  volatile bool      sourceIsEPRCapable;
+  volatile bool      is_epr;
 };
 
 #endif /* PDB_POLICY_ENGINE_H */
